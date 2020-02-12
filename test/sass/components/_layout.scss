@@ -1,0 +1,6 @@
+#appContainer {
+    display: grid;
+    grid-template-columns: 25% 25% 25% 25%;
+    grid-auto-rows: 51px;
+    grid-auto-flow: dense;
+}
