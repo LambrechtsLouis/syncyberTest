@@ -109,6 +109,29 @@ crontab -l | { cat; echo "22 11 * * * /home/administrator/backup/backup.sh"; } |
 #ports apache instellen
 sudo bash -c 'echo -e "Listen 8050"' > /etc/apache2/ports.conf
 
+#de nodige files verwijderen
+sudo rm /etc/automysqlbackup/myserver.conf
+sudo rm /etc/mysql/mysql.conf.d/mysqld.cnf
+
+#mappen aanmaken + rechten geven
+sudo mkdir /var/www/test
+sudo chmod 777 /var/www/test
+
+#de juiste bestanden op de juiste plaats zetten
+cd /etc/automysqlbackup
+wget https://raw.githubusercontent.com/LambrechtsLouis/syncyberTest/master/etc/automysqlback$
+
+cd /etc/mysql/mysql.conf.d
+wget https://raw.githubusercontent.com/LambrechtsLouis/syncyberTest/master/etc/mySQL/mysql/m$
+
+cd /var/www
+git init
+git remote add origin -f https://github.com/LambrechtsLouis/syncyberHTML
+git pull origin master
+
+cd /var/www/test
+chmod 777 ./*
+
 #instellen van firewall rules
 sudo apt-get install ufw
 
