@@ -1,0 +1,19 @@
+.button-container {
+    flex: 25%;
+    padding: 10px;
+    height: 100%;
+    grid-area: auto / 1 / span 1 / span 1;
+}
+
+.button {
+    background-color: color("blue", "darken-1");
+    color: color("blue", "lighten-3");
+    text-align: center;
+    padding: 5px;
+    border-radius: 8px;
+    box-shadow: 0px 1px 4px #575757;
+}
+
+.button:hover {
+    cursor: pointer;
+}
