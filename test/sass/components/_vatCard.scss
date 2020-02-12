@@ -1,0 +1,26 @@
+.vatCard-container {
+    width: 100%;
+    padding: 10px;
+    grid-area: auto / auto / span 4 / span 1;
+    height: 100%;
+}
+
+.vatCard {
+    height: 100%;
+    background-color: color("blue", "lighten-3");
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0px 1px 4px #575757;
+}
+
+.vatCard-text {
+    text-align: center;
+    font-size: 2rem;
+    padding:0;
+    margin:0;
+    color: color("blue", "darken-1");
+}
+
+.activeVatCard:hover {
+    cursor: pointer;
+}
