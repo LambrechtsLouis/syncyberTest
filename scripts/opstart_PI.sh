@@ -86,27 +86,33 @@ sudo service apache2 restart
 sudo aptitude install automysqlbackup autopostgresqlbackup -y
 mkdir /opt/automysqlbackup
 cd /opt/automysqlbackup/
+mkdir /var/backup/
+chmod 777 /var/backup
 wget http://ufpr.dl.sourceforge.net/project/automysqlbackup/AutoMySQLBackup/AutoMySQLBackup%20VER%203.0/automysqlbackup-v3.0_rc6.tar.gz
 tar zxf automysqlbackup-v3.0_rc6.tar.gz
 sudo ./install.sh
 cd /etc/automysqlbackup/
+#nano myserver.conf aanpassen van de instellingen aan de database
 
 #schrijven en aanmaken van backupscript
-sudo bash -c 'echo -e "#!/bin/bash\nbackup_files=\"/home /var /etc \"\ndest=\"/media/usb/backup \"\nday=\$(date+%A)\nhostname=\$(hostname -s)\narchive_file=\"\$hostname-\$day.tgz\"\necho \"Backing up \$backup_files to \$dest/\$archive_file \"\ntar czf \$dest/\$archive_file \$backup_files \n echo \"backup finished\"\nls -lh \$dest"' > /home/pi/backup/backup.sh
+sudo bash -c 'echo -e "#!/bin/bash\nbackup_files=\"/home /var /etc \"\ndest=\"/media/backup\"\nday=\$(date+%A)\nhostname=\$(hostname -s)\narchive_file=\"\$hostname-\$day.tgz\"\necho \"Backing up \$backup_files to \$dest/\$archive_file \"\ntar czf \$dest/\$archive_file \$backup_files \n echo \"backup finished\"\nls -lh \$dest"' > /home/pi/backup/backup.sh
+
+
+#crontabfile instellen
+sudo bash -c 'echo -e "22 11	* * *	root	/home/pi/backup/backup.sh\n39 10	* * *	root	/usr/local/bin/automysqlbackup /etc/automysqlbackup/myserver.conf"' > /etc/crontab
+#sudo bash -c 'echo -e "39 10	* * *	root	/usr/local/bin/automysqlbackup /etc/automysqlbackup/myserver.conf"' > /etc/crontab
 
 alias backup='sudo /home/pi/backup/backup.sh'
 sudo chmod u+x /home/pi/backup/backup.sh
 
-#crontabfile instellen
-sudo bash -c 'echo -e "39 10	* * *	root	/usr/local/bin/automysqlbackup /etc/automysqlbackup/myserver.conf"' > /etc/crontab
-sudo bash -c 'echo -e "22 11    * * *   root    /home/pi/backup/backup.sh"' > /etc/crontab
+
 
 #crontab -e instellen
 crontab -l | { cat; echo "47 10 * * * /usr/local/bin/automysqlbackup /etc/automysqlbackup/myserver.conf"; } | crontab -
 crontab -l | { cat; echo "22 11 * * * /home/pi/backup/backup.sh"; } | crontab -
 
 #ports apache instellen
-sudo bash -c 'echo -e "Listen 8050"' > /etc/apache2/ports.conf
+sudo bash -c 'echo -e "Listen 8050 \nListen 80"' > /etc/apache2/ports.conf
 
 #de nodige files verwijderen
 sudo rm /etc/automysqlbackup/myserver.conf
@@ -118,18 +124,24 @@ sudo chmod 777 /var/www/test
 
 #de juiste bestanden op de juiste plaats zetten
 cd /etc/automysqlbackup
-wget https://raw.githubusercontent.com/LambrechtsLouis/syncyberTest/master/etc/automysqlback$
+wget https://raw.githubusercontent.com/LambrechtsLouis/syncyberTest/master/etc/automysqlbackup/myserver.conf
 
 cd /etc/mysql/mysql.conf.d
-wget https://raw.githubusercontent.com/LambrechtsLouis/syncyberTest/master/etc/mySQL/mysql/m$
+wget https://raw.githubusercontent.com/LambrechtsLouis/syncyberTest/master/etc/mySQL/mysql/mysqld.cnf
 
 cd /var/www
 git init
-git remote add origin -f https://github.com/LambrechtsLouis/syncyberHTML
-git pull origin master
+git clone https://github.com/LambrechtsLouis/syncyberHTML
+
+cp -r syncyberHTML/test/ /var/www/
+rm -r syncyberHTML/
+
 
 cd /var/www/test
 chmod 777 ./*
+
+#na het schrijven apache herstarten
+sudo service apache2 restart
 
 #instellen van firewall rules
 sudo apt-get install ufw
@@ -154,3 +166,4 @@ sudo ufw allow out 80
 sudo ufw allow out 443
 sudo ufw allow out 3306
 
+sudo ufw enable
