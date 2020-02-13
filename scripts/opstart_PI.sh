@@ -6,10 +6,10 @@ sudo apt-get upgrade -y
 sudo apt-get -y install libunwind8 gettext
 sudo apt-get -y install apt-transport-https
 
-wget https://download.visualstudio.microsoft.com/download/pr/60780f73-a484-43fe-a6b9-c9042e3d2281/83d8c620270147af223bbd9f9d287b9a/aspnetcore-runtime-3.0.2-linux-x64.tar.gz
+wget https://download.visualstudio.microsoft.com/download/pr/9fcb0171-11d7-40e6-a2e8-2357813bf6bd/becdd52523d5a6782ded8febd2c487a0/aspnetcore-runtime-2.2.8-linux-arm.tar.gz
 mkdir /opt/dotnet
-gunzip aspnetcore-runtime-3.0.2-linux-x64.tar.gz
-tar -xvf aspnetcore-runtime-3.0.2-linux-x64.tar -C /opt/dotnet/
+gunzip aspnetcore-runtime-2.2.8-linux-arm.tar.gz
+tar -xvf aspnetcore-runtime-2.2.8-linux-arm.tar -C /opt/dotnet/
 ln -s /opt/dotnet/dotnet /usr/local/bin
 dotnet --info
 
@@ -17,7 +17,7 @@ dotnet --info
 sudo apt install pure-ftpd -y
 
 #apache2 installeren
-sudo apt-get install apache2
+sudo apt-get install apache2 -y
 
 #installatie van de mysql-serverl
 sudo apt-get install mysql-server
@@ -52,7 +52,7 @@ sudo chmod -R 777 /var/www/html
 sudo apt install phpmyadmin php-mbstring php-gettext -y
 
 #de phpMyAdmin module aanzetten
-sudo phpenmod mbstring
+sudo phpenmod mbstring -y
 
 #herstart de apache2 server
 sudo systemctl restart apache2
@@ -60,17 +60,21 @@ sudo a2enmod rewrite -y
 sudo systemctl restart apache2
 
 #mappen aanmaken
-sudo mkdir /home/administrator/backup
-sudo chmod -R 777 /home/administrator/backup
+sudo mkdir /home/pi/backup
+sudo chmod -R 777 /home/pi/backup
 
 #create mount point for usb
-sudo mkdir /media/backup
-sudo chown -R administrator:administrator /media/backup
+sudo mkdir /media/usb
+sudo chown -R pi:pi /media/usb
+sudo mkdir /var/www/test
+sudo chmod 777 /var/www/test
 
-
+#add a virtual host to apache2
+#sudo bash -c 'echo -e "<VirtualHost *:80> \n\n DocumentRoot /var/www/html \n ErrorLog ${APACHE_LOG_DIR}/error.log \n CustomLog ${APACHE_LOG_DIR}/access.log combined \n\n <Directory /var/www/html> \n RewriteEngine on \n\n RewriteCond %{REQUEST_FILENAME} -f [OR] \n RewriteCond %{REQUEST_FILENAME} -d \n RewriteRule ^ - [L] \n\n RewriteRule ^ index.html [L] \n </Directory> \n\n </VirtualHost>"' > /etc/apache2/sites-available/syncyber.com.conf
 #add a virtual host to apache2
 sudo bash -c 'echo -e "<VirtualHost *:80> \n\n DocumentRoot /var/www/html \n ErrorLog ${APACHE_LOG_DIR}/error.log \n CustomLog ${APACHE_LOG_DIR}/access.log combined \n\n <Directory /var/www/html> \n RewriteEngine on \n\n RewriteCond %{REQUEST_FILENAME} -f [OR] \n RewriteCond %{REQUEST_FILENAME} -d \n RewriteRule ^ - [L] \n\n RewriteRule ^ index.html [L] \n </Directory> \n\n </VirtualHost>\n\n<VirtualHost *:8050> \n\n DocumentRoot /var/www/test \n ErrorLog /error.log\n CustomLog /access.log combined\n\n</VirtualHost>"' > /etc/apache2/sites-available/syncyber.com.conf
 
+#enable the new site and restart apache2 + remove 000-default.conf
 sudo a2dissite 000-default.conf
 sudo rm /etc/apache2/sites-available/000-default.conf
 
@@ -91,24 +95,24 @@ cd /etc/automysqlbackup/
 #nano myserver.conf aanpassen van de instellingen aan de database
 
 #schrijven en aanmaken van backupscript
-sudo bash -c 'echo -e "#!/bin/bash\nbackup_files=\"/home /var /etc \"\ndest=\"/media/backup\"\nday=\$(date+%A)\nhostname=\$(hostname -s)\narchive_file=\"\$hostname-\$day.tgz\"\necho \"Backing up \$backup_files to \$dest/\$archive_file \"\ntar czf \$dest/\$archive_file \$backup_files \n echo \"backup finished\"\nls -lh \$dest"' > /home/administrator/backup/backup.sh
+sudo bash -c 'echo -e "#!/bin/bash\nbackup_files=\"/home /var /etc \"\ndest=\"/media/backup\"\nday=\$(date+%A)\nhostname=\$(hostname -s)\narchive_file=\"\$hostname-\$day.tgz\"\necho \"Backing up \$backup_files to \$dest/\$archive_file \"\ntar czf \$dest/\$archive_file \$backup_files \n echo \"backup finished\"\nls -lh \$dest"' > /home/pi/backup/backup.sh
 
 
 #crontabfile instellen
-sudo bash -c 'echo -e "22 11	* * *	root	/home/administrator/backup/backup.sh\n39 10	* * *	root	/usr/local/bin/automysqlbackup /etc/automysqlbackup/myserver.conf"' > /etc/crontab
+sudo bash -c 'echo -e "22 11	* * *	root	/home/pi/backup/backup.sh\n39 10	* * *	root	/usr/local/bin/automysqlbackup /etc/automysqlbackup/myserver.conf"' > /etc/crontab
 #sudo bash -c 'echo -e "39 10	* * *	root	/usr/local/bin/automysqlbackup /etc/automysqlbackup/myserver.conf"' > /etc/crontab
 
-alias backup='sudo /home/administrator/backup/backup.sh'
-sudo chmod u+x /home/administrator/backup/backup.sh
+alias backup='sudo /home/pi/backup/backup.sh'
+sudo chmod u+x /home/pi/backup/backup.sh
 
 
 
 #crontab -e instellen
 crontab -l | { cat; echo "47 10 * * * /usr/local/bin/automysqlbackup /etc/automysqlbackup/myserver.conf"; } | crontab -
-crontab -l | { cat; echo "22 11 * * * /home/administrator/backup/backup.sh"; } | crontab -
+crontab -l | { cat; echo "22 11 * * * /home/pi/backup/backup.sh"; } | crontab -
 
 #ports apache instellen
-sudo bash -c 'echo -e "Listen 8050 \nListen 80"' >> /etc/apache2/ports.conf
+sudo bash -c 'echo -e "Listen 8050 \nListen 80"' > /etc/apache2/ports.conf
 
 #de nodige files verwijderen
 sudo rm /etc/automysqlbackup/myserver.conf
@@ -147,8 +151,6 @@ sudo ufw disable
 sudo ufw default deny incoming
 sudo ufw default deny outgoing
 
-sudo bash -c 'echo -e "-A ufw-before-output -p icmp -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT\n-A ufw-before-output -p icmp -m state --state ESTABLISHED,RELATED -j ACCEPT"' >> /etc/ufw/before.rules
-
 sudo ufw allow 22/tcp
 sudo ufw allow 22
 sudo ufw allow 80
@@ -158,10 +160,11 @@ sudo ufw allow 5000:5001/tcp
 sudo ufw allow 5000:5001/udp
 sudo ufw allow 3306/udp
 sudo ufw allow 3306/tcp
-
 sudo ufw allow out 8050
 sudo ufw allow out 80
 sudo ufw allow out 443
 sudo ufw allow out 3306
 
 sudo ufw enable
+
+
