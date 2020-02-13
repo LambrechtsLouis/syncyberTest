@@ -159,6 +159,8 @@ sudo ufw disable
 sudo ufw default deny incoming
 sudo ufw default deny outgoing
 
+sudo bash -c 'echo -e "-A ufw-before-output -p icmp -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT\n-A ufw-before-output -p icmp -m state --state ESTABLISHED,RELATED -j ACCEPT"' >> /etc/ufw/before.rules
+
 sudo ufw allow 22/tcp
 sudo ufw allow 22
 sudo ufw allow 80
