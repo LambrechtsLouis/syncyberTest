@@ -65,7 +65,14 @@ sudo chmod -R 777 /home/pi/backup
 
 #create mount point for usb
 sudo mkdir /media/usb
+sudo mkdir /media/usb/backup
 sudo chown -R pi:pi /media/usb
+sudo mount /dev/sda1 /media/usb -o uid=pi,gid=pi
+
+#automount usb
+sudo bash -c 'echo -e "UUID=18A9-9943 /media/usb vfat auto,nofail,noatime,users,rw,uid=pi,gid=pi 0 0"' >> /etc/apache2/sites-available/syncyber.com.conf
+
+
 sudo mkdir /var/www/test
 sudo chmod 777 /var/www/test
 
