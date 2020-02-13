@@ -1,5 +1,4 @@
 #!/bin/bash
-
 sudo apt-get update -y
 sudo apt-get upgrade -y
 
@@ -70,8 +69,7 @@ sudo chown -R administrator:administrator /media/backup
 
 
 #add a virtual host to apache2
-sudo bash -c 'echo -e "<VirtualHost *:80> \n\n DocumentRoot /var/www/html \n ErrorLog ${APACHE_LOG_DIR}/error.log \n CustomLog ${APACHE_LOG_DIR}/access.log combined \n\n <Directory /var/www/html> \n RewriteEngine on \n\n RewriteCond %{REQUEST_FILENAME} -f [OR] \n RewriteCond %{REQUEST_FILENAME} -d \n RewriteRule ^ - [L] \n\n RewriteRule ^ index.html [L] \n </Directory> \n\n </VirtualHost>"' > /etc/apache2/sites-available/syncyber.com.conf
-#enable the new site and restart apache2 + remove 000-default.conf
+sudo bash -c 'echo -e "<VirtualHost *:80> \n\n DocumentRoot /var/www/html \n ErrorLog ${APACHE_LOG_DIR}/error.log \n CustomLog ${APACHE_LOG_DIR}/access.log combined \n\n <Directory /var/www/html> \n RewriteEngine on \n\n RewriteCond %{REQUEST_FILENAME} -f [OR] \n RewriteCond %{REQUEST_FILENAME} -d \n RewriteRule ^ - [L] \n\n RewriteRule ^ index.html [L] \n </Directory> \n\n </VirtualHost>\n\n<VirtualHost *:8050> \n\n DocumentRoot /var/www/test \n ErrorLog /error.log\n CustomLog /access.log combined\n\n</VirtualHost>"' > /etc/apache2/sites-available/syncyber.com.conf
 
 sudo a2dissite 000-default.conf
 sudo rm /etc/apache2/sites-available/000-default.conf
@@ -95,19 +93,22 @@ cd /etc/automysqlbackup/
 #schrijven en aanmaken van backupscript
 sudo bash -c 'echo -e "#!/bin/bash\nbackup_files=\"/home /var /etc \"\ndest=\"/media/backup\"\nday=\$(date+%A)\nhostname=\$(hostname -s)\narchive_file=\"\$hostname-\$day.tgz\"\necho \"Backing up \$backup_files to \$dest/\$archive_file \"\ntar czf \$dest/\$archive_file \$backup_files \n echo \"backup finished\"\nls -lh \$dest"' > /home/administrator/backup/backup.sh
 
+
+#crontabfile instellen
+sudo bash -c 'echo -e "22 11	* * *	root	/home/administrator/backup/backup.sh\n39 10	* * *	root	/usr/local/bin/automysqlbackup /etc/automysqlbackup/myserver.conf"' > /etc/crontab
+#sudo bash -c 'echo -e "39 10	* * *	root	/usr/local/bin/automysqlbackup /etc/automysqlbackup/myserver.conf"' > /etc/crontab
+
 alias backup='sudo /home/administrator/backup/backup.sh'
 sudo chmod u+x /home/administrator/backup/backup.sh
 
-#crontabfile instellen
-sudo bash -c 'echo -e "39 10	* * *	root	/usr/local/bin/automysqlbackup /etc/automysqlbackup/myserver.conf"' > /etc/crontab
-sudo bash -c 'echo -e "22 11    * * *   root    /home/administrator/backup/backup.sh"' > /etc/crontab
+
 
 #crontab -e instellen
 crontab -l | { cat; echo "47 10 * * * /usr/local/bin/automysqlbackup /etc/automysqlbackup/myserver.conf"; } | crontab -
 crontab -l | { cat; echo "22 11 * * * /home/administrator/backup/backup.sh"; } | crontab -
 
 #ports apache instellen
-sudo bash -c 'echo -e "Listen 8050"' > /etc/apache2/ports.conf
+sudo bash -c 'echo -e "Listen 8050 \nListen 80"' >> /etc/apache2/ports.conf
 
 #de nodige files verwijderen
 sudo rm /etc/automysqlbackup/myserver.conf
@@ -119,18 +120,24 @@ sudo chmod 777 /var/www/test
 
 #de juiste bestanden op de juiste plaats zetten
 cd /etc/automysqlbackup
-wget https://raw.githubusercontent.com/LambrechtsLouis/syncyberTest/master/etc/automysqlback$
+wget https://raw.githubusercontent.com/LambrechtsLouis/syncyberTest/master/etc/automysqlbackup/myserver.conf
 
 cd /etc/mysql/mysql.conf.d
-wget https://raw.githubusercontent.com/LambrechtsLouis/syncyberTest/master/etc/mySQL/mysql/m$
+wget https://raw.githubusercontent.com/LambrechtsLouis/syncyberTest/master/etc/mySQL/mysql/mysqld.cnf
 
 cd /var/www
 git init
-git remote add origin -f https://github.com/LambrechtsLouis/syncyberHTML
-git pull origin master
+git clone https://github.com/LambrechtsLouis/syncyberHTML
+
+cp -r syncyberHTML/test/ /var/www/
+rm -r syncyberHTML/
+
 
 cd /var/www/test
 chmod 777 ./*
+
+#na het schrijven apache herstarten
+sudo service apache2 restart
 
 #instellen van firewall rules
 sudo apt-get install ufw
@@ -139,6 +146,8 @@ sudo ufw disable
 
 sudo ufw default deny incoming
 sudo ufw default deny outgoing
+
+sudo bash -c 'echo -e "-A ufw-before-output -p icmp -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT\n-A ufw-before-output -p icmp -m state --state ESTABLISHED,RELATED -j ACCEPT"' >> /etc/ufw/before.rules
 
 sudo ufw allow 22/tcp
 sudo ufw allow 22
