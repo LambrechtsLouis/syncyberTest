@@ -67,6 +67,7 @@ sudo chmod -R 777 /home/pi/backup
 sudo mkdir /media/usb
 sudo mkdir /media/usb/backup
 sudo chown -R pi:pi /media/usb
+sudo chown -R pi:pi /media/usb/backup
 sudo mount /dev/sda1 /media/usb -o uid=pi,gid=pi
 
 #automount usb
