@@ -160,10 +160,11 @@ sudo ufw allow 5000:5001/tcp
 sudo ufw allow 5000:5001/udp
 sudo ufw allow 3306/udp
 sudo ufw allow 3306/tcp
-
 sudo ufw allow out 8050
 sudo ufw allow out 80
 sudo ufw allow out 443
 sudo ufw allow out 3306
 
 sudo ufw enable
+
+
